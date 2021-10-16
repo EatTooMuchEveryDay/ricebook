@@ -1,6 +1,5 @@
 import logo from './logo.svg';
 import './App.css';
-import Button from '@material-ui/core/Button';
 
 function App() {
   return (
@@ -19,7 +18,7 @@ function App() {
           Learn React
         </a>
       </header> */}
-      <Button variant="contained">你好，世界</Button>
+      {/* {this.props.children} */}
     </div>
   );
 }

@@ -3,19 +3,47 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { BrowserRouter as Router, Link, Route, Switch, Redirect } from 'react-router-dom';
+// import { Router, Route, Redirect } from 'react-router';
+import { Provider } from 'react-redux';
+import { createStore } from "redux";
+import { ricebookApp } from './reducers';
+import NavBar from './NavBar';
+import Welcome from './Welcome/Welcome';
+import Main from './Main/Main';
+import Profile from './Profile/Profile';
 
-// Roboto Font
-import '@fontsource/roboto/300.css';
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/700.css';
-// Matierial Icons
-import AccessAlarmIcon from '@material-ui/icons/AccessAlarm';
-import ThreeDRotation from '@material-ui/icons/ThreeDRotation';
+const store = createStore(ricebookApp);
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    {/* <App /> */}
+    <Provider store={store}>
+      <Router>
+        <Route path="/">
+          {/* <Switch> */}
+          {/* <App> */}
+          {/* <Route path="accounts"></Route> */}
+          {/* </App> */}
+          {/* </Switch> */}
+          <NavBar />
+        </Route>
+        {/* <Redirect from="/" to="welcome" /> */}
+        <Switch>
+          <Route exact path="/welcome">
+            <Welcome />
+          </Route>
+          <Route exact path="/main">
+            <Main />
+          </Route>
+          <Route exact path="/profile">
+            <Profile />
+          </Route>
+          <Redirect from="/*" to="welcome" />
+        </Switch>
+
+      </Router>
+    </Provider>
   </React.StrictMode>,
   document.getElementById('root')
 );
