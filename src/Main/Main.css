@@ -1,0 +1,18 @@
+.add-follower-input {
+    width: 100%;
+    height: 100%;
+    font-size: 15px;
+    padding-left: 20px;
+    border: none;
+    color: white;
+    background-color: transparent;
+}
+
+.add-follower-input:focus {
+    color: black;
+    background-color: #ffffffee!important;
+}
+
+#write-article-img-upload {
+    display: none;
+}

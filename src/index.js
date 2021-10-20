@@ -1,4 +1,5 @@
 import React from 'react';
+import $ from 'jquery';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
@@ -8,10 +9,11 @@ import { BrowserRouter as Router, Link, Route, Switch, Redirect } from 'react-ro
 import { Provider } from 'react-redux';
 import { createStore } from "redux";
 import { ricebookApp } from './reducers';
-import NavBar from './NavBar';
+import { ToastContainer, toast } from 'react-toastify';
 import Welcome from './Welcome/Welcome';
 import Main from './Main/Main';
 import Profile from './Profile/Profile';
+
 
 const store = createStore(ricebookApp);
 
@@ -19,32 +21,22 @@ ReactDOM.render(
   <React.StrictMode>
     {/* <App /> */}
     <Provider store={store}>
-      <Router>
-        <Route path="/">
-          {/* <Switch> */}
-          {/* <App> */}
-          {/* <Route path="accounts"></Route> */}
-          {/* </App> */}
-          {/* </Switch> */}
-          <NavBar />
+      <Router><Switch>
+        <Route exact path="/welcome">
+          <Welcome />
         </Route>
-        {/* <Redirect from="/" to="welcome" /> */}
-        <Switch>
-          <Route exact path="/welcome">
-            <Welcome />
-          </Route>
-          <Route exact path="/main">
-            <Main />
-          </Route>
-          <Route exact path="/profile">
-            <Profile />
-          </Route>
-          <Redirect from="/*" to="welcome" />
-        </Switch>
-
+        <Route exact path="/main">
+          <Main />
+        </Route>
+        <Route exact path="/profile">
+          <Profile />
+        </Route>
+        <Redirect from="/*" to="welcome" />
+      </Switch>
       </Router>
     </Provider>
-  </React.StrictMode>,
+    <ToastContainer />
+  </React.StrictMode >,
   document.getElementById('root')
 );
 

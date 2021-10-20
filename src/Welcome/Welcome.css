@@ -1,0 +1,8 @@
+.welcome-form-row{
+    margin-top: 25px;
+    margin-bottom: 25px;
+}
+
+.welcome-form-row .welcome-form-input{
+    width: 300px;
+}
