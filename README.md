@@ -6,5 +6,5 @@
 
 - Name: Rui Xiao
 - Netid: rx12
-- Frontend: [rx12comp531hw4.surge.sh](rx12comp531hw4.surge.sh)
+- Frontend: [https://rx12comp531hw4.surge.sh](https://rx12comp531hw4.surge.sh)
 
