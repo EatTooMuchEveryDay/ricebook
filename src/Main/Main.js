@@ -1,4 +1,4 @@
-import { React, Component } from 'react';
+import React, { Component } from 'react';
 import { withRouter } from 'react-router';
 import { Box, AppBar, styled, alpha, Toolbar, IconButton, Button, Typography, Avatar, InputBase, SwipeableDrawer, Card, Stack, TextField, Grid, Modal } from '@material-ui/core';
 import { Menu, More, Search as SearchIcon, Create, Logout, Settings, Group, Add, Check, Delete, Close, Image, TurnedIn } from '@material-ui/icons';
@@ -9,6 +9,8 @@ import Post from './Post';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { connect } from 'react-redux';
+import { setUsername } from "../actions"
 
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
@@ -70,7 +72,6 @@ class Main extends Component {
         super(props);
         this.state = {
             userID: -1,
-            username: "",
             users: [], // TO BE REMOVED
             posts: [], // TO BE REMOVED?
             followers: [],
@@ -78,19 +79,25 @@ class Main extends Component {
             followInput: "",
             searchInput: "",
             updateStatusModalOpen: false,
-            status: "It is a sunny day!",
+            status: "",
             updateStatusInput: "",
             writeArticleModalOpen: false,
             writeArticleTitleInput: "",
             writeArticleInput: "",
+            // filteredPosts: []
         }
+        this.filteredPosts = [];
+        this.cancel = null;
 
         this.checkAuth = this.checkAuth.bind(this);
+        this.getStatusLocalStorage = this.getStatusLocalStorage.bind(this);
+        this.setStatusLocalStorage = this.setStatusLocalStorage.bind(this);
         this.logout = this.logout.bind(this);
         this.jumpProfile = this.jumpProfile.bind(this);
         this.loadUsers = this.loadUsers.bind(this);
         this.loadPosts = this.loadPosts.bind(this);
         this.filterPosts = this.filterPosts.bind(this);
+        // this.filterPostsForTest = this.filterPostsForTest.bind(this);
         this.toggleDrawer = this.toggleDrawer.bind(this);
         this.unfollow = this.unfollow.bind(this);
         this.onFollowInputChange = this.onFollowInputChange.bind(this);
@@ -112,39 +119,96 @@ class Main extends Component {
         this.checkAuth();
         this.loadUsers();
     }
+    componentWillUnmount() {
+        // Just for test
+        this.cancel();
+    }
     checkAuth() {
         let loggedIn = localStorage.getItem("loggedIn");
-        this.setState({ username: localStorage.getItem("username") });
+        // this.setState({ username: localStorage.getItem("username") });
+        this.props.setUsername(localStorage.getItem("username"));
 
         if (loggedIn == 'false') {
             this.props.history.push("/welcome");
+        } else {
+            this.getStatusLocalStorage();
         }
+    }
+    getStatusLocalStorage() {
+        // TO BE REMOVED
+
+        let statusList = localStorage.getItem("statusList");
+        let username = localStorage.getItem("username");
+
+        if (statusList == null || statusList == undefined || statusList == '') {
+            this.setState({ status: "It is a sunny day!" });
+
+            statusList = {};
+            statusList[username] = "It is a sunny day!";
+            localStorage.setItem("statusList", JSON.stringify(statusList));
+            return;
+        }
+
+        statusList = JSON.parse(statusList);
+
+        if (statusList[username] == null || statusList[username] == undefined) {
+            this.setState({ status: "It is a sunny day!" });
+
+            statusList[this.props.username] = "It is a sunny day!";
+            localStorage.setItem("statusList", JSON.stringify(statusList));
+            return;
+        }
+
+        this.setState({ status: statusList[username] });
+    }
+    setStatusLocalStorage(status) {
+        // TO BE REMOVED
+
+        let statusList = localStorage.getItem("statusList");
+
+        if (statusList == null || statusList == undefined || statusList == '') {
+            statusList = {};
+        } else {
+            statusList = JSON.parse(statusList);
+        }
+
+        statusList[this.props.username] = status;
+        localStorage.setItem("statusList", JSON.stringify(statusList));
     }
     jumpProfile() {
         this.props.history.push("/profile");
     }
     loadUsers() {
-        axios.get('https://jsonplaceholder.typicode.com/users')
+        let self = this;
+        axios.get('https://jsonplaceholder.typicode.com/users',
+            {
+                cancelToken: new axios.CancelToken(function executor(c) {
+                    self.cancel = c;
+                })
+            })
             .then(function (response) {
-                this.setState({ users: response.data });
+                if (this.componentWillUnmount)
+                    this.setState({ users: response.data });
 
                 for (let idx in response.data) {
                     let user = response.data[idx];
-                    if (user.username === this.state.username) {
+                    if (user.username === this.props.username) {
                         this.setState({ userID: user.id });
                     }
                 }
 
                 // TO BE REMOVED
                 let userID = this.state.userID;
+                let followers = [];
                 if (userID < 0) {
                     userID = 0;
+                    followers.push(this.state.users[0]);
                     this.setState({ name: "newRegisteredName" });
-                }
-                let followers = [];
-                for (let i = 0, j = userID + 1; i < 3; i++, j++) {
-                    j = (j > 10 ? j - 10 : j);
-                    followers.push(this.state.users[j - 1]);
+                } else {
+                    for (let i = 0, j = userID + 1; i < 3; i++, j++) {
+                        j = (j > 10 ? j - 10 : j);
+                        followers.push(this.state.users[j - 1]);
+                    }
                 }
 
                 this.setState({ followers: followers });
@@ -171,104 +235,106 @@ class Main extends Component {
                     response.data[idx].username = users[response.data[idx].userId - 1].username;
                     response.data[idx].name = users[response.data[idx].userId - 1].name;
                 }
-                // TO BE REMOVED
-                if (this.state.userID < 0) {
-                    [{
-                        "userId": this.state.userID,
-                        "id": Math.round(Math.random() * 999999999),
-                        "title": "Random Title 1",
-                        "body": "Random Body 1",
-                        username: this.state.username,
-                        name: this.state.name,
-                        timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
-                    },
-                    {
-                        "userId": this.state.userID,
-                        "id": Math.round(Math.random() * 999999999),
-                        "title": "Random Title 2",
-                        "body": "Random Body 2",
-                        username: this.state.username,
-                        name: this.state.name,
-                        timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
-                    },
-                    {
-                        "userId": this.state.userID,
-                        "id": Math.round(Math.random() * 999999999),
-                        "title": "Random Title 3",
-                        "body": "Random Body 3",
-                        username: this.state.username,
-                        name: this.state.name,
-                        timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
-                    },
-                    {
-                        "userId": this.state.userID,
-                        "id": Math.round(Math.random() * 999999999),
-                        "title": "Random Title 4",
-                        "body": "Random Body 4",
-                        username: this.state.username,
-                        name: this.state.name,
-                        timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
-                    },
-                    {
-                        "userId": this.state.userID,
-                        "id": Math.round(Math.random() * 999999999),
-                        "title": "Random Title 5",
-                        "body": "Random Body 5",
-                        username: this.state.username,
-                        name: this.state.name,
-                        timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
-                    },
-                    {
-                        "userId": this.state.userID,
-                        "id": Math.round(Math.random() * 999999999),
-                        "title": "Random Title 6",
-                        "body": "Random Body 6",
-                        username: this.state.username,
-                        name: this.state.name,
-                        timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
-                    },
-                    {
-                        "userId": this.state.userID,
-                        "id": Math.round(Math.random() * 999999999),
-                        "title": "Random Title 7",
-                        "body": "Random Body 7",
-                        username: this.state.username,
-                        name: this.state.name,
-                        timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
-                    },
-                    {
-                        "userId": this.state.userID,
-                        "id": Math.round(Math.random() * 999999999),
-                        "title": "Random Title 8",
-                        "body": "Random Body 8",
-                        username: this.state.username,
-                        name: this.state.name,
-                        timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
-                    },
-                    {
-                        "userId": this.state.userID,
-                        "id": Math.round(Math.random() * 999999999),
-                        "title": "Random Title 9",
-                        "body": "Random Body 9",
-                        username: this.state.username,
-                        name: this.state.name,
-                        timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
-                    },
-                    {
-                        "userId": this.state.userID,
-                        "id": Math.round(Math.random() * 999999999),
-                        "title": "Random Title 10",
-                        "body": "Random Body 10",
-                        username: this.state.username,
-                        name: this.state.name,
-                        timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
-                    }
-                    ].forEach((x) => { response.data.push(x) });
-                }
+                // // TO BE REMOVED
+                // if (this.state.userID < 0) {
+                //     [{
+                //         "userId": this.state.userID,
+                //         "id": Math.round(Math.random() * 999999999),
+                //         "title": "Random Title 1",
+                //         "body": "Random Body 1",
+                //         username: this.props.username,
+                //         name: this.state.name,
+                //         timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
+                //     },
+                //     {
+                //         "userId": this.state.userID,
+                //         "id": Math.round(Math.random() * 999999999),
+                //         "title": "Random Title 2",
+                //         "body": "Random Body 2",
+                //         username: this.props.username,
+                //         name: this.state.name,
+                //         timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
+                //     },
+                //     {
+                //         "userId": this.state.userID,
+                //         "id": Math.round(Math.random() * 999999999),
+                //         "title": "Random Title 3",
+                //         "body": "Random Body 3",
+                //         username: this.props.username,
+                //         name: this.state.name,
+                //         timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
+                //     },
+                //     {
+                //         "userId": this.state.userID,
+                //         "id": Math.round(Math.random() * 999999999),
+                //         "title": "Random Title 4",
+                //         "body": "Random Body 4",
+                //         username: this.props.username,
+                //         name: this.state.name,
+                //         timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
+                //     },
+                //     {
+                //         "userId": this.state.userID,
+                //         "id": Math.round(Math.random() * 999999999),
+                //         "title": "Random Title 5",
+                //         "body": "Random Body 5",
+                //         username: this.props.username,
+                //         name: this.state.name,
+                //         timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
+                //     },
+                //     {
+                //         "userId": this.state.userID,
+                //         "id": Math.round(Math.random() * 999999999),
+                //         "title": "Random Title 6",
+                //         "body": "Random Body 6",
+                //         username: this.props.username,
+                //         name: this.state.name,
+                //         timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
+                //     },
+                //     {
+                //         "userId": this.state.userID,
+                //         "id": Math.round(Math.random() * 999999999),
+                //         "title": "Random Title 7",
+                //         "body": "Random Body 7",
+                //         username: this.props.username,
+                //         name: this.state.name,
+                //         timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
+                //     },
+                //     {
+                //         "userId": this.state.userID,
+                //         "id": Math.round(Math.random() * 999999999),
+                //         "title": "Random Title 8",
+                //         "body": "Random Body 8",
+                //         username: this.props.username,
+                //         name: this.state.name,
+                //         timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
+                //     },
+                //     {
+                //         "userId": this.state.userID,
+                //         "id": Math.round(Math.random() * 999999999),
+                //         "title": "Random Title 9",
+                //         "body": "Random Body 9",
+                //         username: this.props.username,
+                //         name: this.state.name,
+                //         timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
+                //     },
+                //     {
+                //         "userId": this.state.userID,
+                //         "id": Math.round(Math.random() * 999999999),
+                //         "title": "Random Title 10",
+                //         "body": "Random Body 10",
+                //         username: this.props.username,
+                //         name: this.state.name,
+                //         timestamp: Math.round(Math.random() * 31536000000.0) + 1577808000000
+                //     }
+                //     ].forEach((x) => { response.data.push(x) });
+                // }
 
                 response.data.sort((a, b) => { return b.timestamp - a.timestamp });
 
                 this.setState({ posts: response.data });
+
+                // setTimeout(this.filterPostsForTest.bind(this), 200);
             }.bind(this))
             .catch(function (error) {
                 toast.error('Unable to connect server', {
@@ -284,33 +350,53 @@ class Main extends Component {
 
         // this.filterPosts();
     }
+    // filterPostsForTest(input) {
+    //     // by follower, by self, by search
+    //     let t = this.state.posts.filter((post) => {
+    //         // if (this.state.searchInput != "") {
+
+    //         let flag = this.state.followers.some((follower) => { return follower.id === post.userId; }) || this.state.userID == post.userId;
+    //         if (flag && input == "") {
+    //             // let re = new RegExp(this.state.searchInput, "i");
+    //             let re = new RegExp(input, "i");
+
+    //             flag = re.exec(post.title) != null || re.exec(post.name) != null || re.exec(post.username) != null || re.exec(post.body) != null;
+    //         }
+
+    //         return flag;
+    //     });
+
+    //     this.setState({ filteredPosts: t });
+
+    //     // return t;
+    // }
     filterPosts() {
         // by follower, by self, by search
-        return this.state.posts.filter((post) => {
-            if (this.state.searchInput != "") {
-                let re = new RegExp(this.state.searchInput, "i");
-                if (re.exec(post.title) != null || re.exec(post.name) != null || re.exec(post.username) != null || re.exec(post.body) != null) {
-                    return true;
-                }
-            } else {
-                if (this.state.followers.some((follower) => { return follower.id === post.userId; })) {
-                    return true;
-                }
+        let t = this.state.posts.filter((post) => {
+            // if (this.state.searchInput != "") {
 
-                if (this.state.userID == post.userId) {
-                    return true;
-                }
+            let flag = this.state.followers.some((follower) => { return follower.id === post.userId; }) || this.state.userID == post.userId;
+            if (flag && this.state.searchInput != "") {
+                // let re = new RegExp(this.state.searchInput, "i");
+                let re = new RegExp(this.state.searchInput, "i");
+
+                flag = re.exec(post.title) != null || re.exec(post.name) != null || re.exec(post.username) != null || re.exec(post.body) != null;
             }
 
-            return false;
+            return flag;
         });
+
+        this.filteredPosts = t;
+
+        return t;
     }
     logout() {
         localStorage.setItem("loggedIn", false);
+        this.props.setUsername('');
         this.props.history.push("/welcome");
     }
     toggleDrawer = (open) => (event) => {
-        if (event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) {
+        if (event != null && event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) {
             return;
         }
 
@@ -335,20 +421,62 @@ class Main extends Component {
             return;
         }
 
-        let newFollower = {
-            "id": Math.round(Math.random() * 999999999),
-            "name": this.state.followInput,
-            "username": this.state.followInput,
-            "company": {
-                "catchPhrase": this.state.followInput + " has something to say",
-            }
-        };
+        let user = this.state.users.find((x) => { return x.username === this.state.followInput });
+
+        if (user == null) {
+            toast.error('User not found', {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: true,
+                closeOnClick: false,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+            return;
+        }
+
+        if (user.id == this.state.userID) {
+            toast.error('You can not follow yourself', {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: true,
+                closeOnClick: false,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+            return;
+        }
+
+        if (this.state.followers.some((x) => { return x.id == user.id })) {
+            toast.error('You have already followed him/her', {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: true,
+                closeOnClick: false,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+            return;
+        }
+
+        // let newFollower = {
+        //     "id": user.id,//Math.round(Math.random() * 999999999),
+        //     "name": this.state.followInput,
+        //     "username": this.state.followInput,
+        //     "company": {
+        //         "catchPhrase": this.state.followInput + " has something to say",
+        //     }
+        // };
         let followers = this.state.followers;
-        followers.push(newFollower);
+        followers.push(user);
         this.setState(followers);
         this.setState({ followInput: "" });
     }
     handleSearchInputChange(e) {
+        // this.props.filteredPosts = e.target.value;
         this.setState({ searchInput: e.target.value });
     }
     openUpdateStatusModal(e) {
@@ -362,6 +490,10 @@ class Main extends Component {
     }
     updateStatus() {
         this.setState({ status: this.state.updateStatusInput, updateStatusModalOpen: false });
+
+        // TO BE REMOVED
+        this.setStatusLocalStorage(this.state.updateStatusInput);
+
         this.clearUpdateStatusInput();
     }
     clearUpdateStatusInput() {
@@ -383,7 +515,7 @@ class Main extends Component {
         // post article
         let newPost = {
             "userId": this.state.userID,
-            "username": this.state.username,
+            "username": this.props.username,
             "name": this.state.name,
             "id": Math.round(Math.random() * 999999999),
             "title": this.state.writeArticleTitleInput,
@@ -434,7 +566,7 @@ class Main extends Component {
                             justifyContent="flex-start">
                             <Card
                                 raised={true}
-                                sx={{ width: 280, height: 40, borderRadius: 20, backgroundColor: '#ffffff44', ":hover": { backgroundColor: '#ffffffaa' },transition:'background-color 0.6s cubic-bezier(0.19, 1, 0.22, 1)' }}>
+                                sx={{ width: 280, height: 40, borderRadius: 20, backgroundColor: '#ffffff44', ":hover": { backgroundColor: '#ffffffaa' }, transition: 'background-color 0.6s cubic-bezier(0.19, 1, 0.22, 1)' }}>
                                 <input className="add-follower-input" value={this.state.followInput} onChange={this.onFollowInputChange} />
                             </Card>
                             <IconButton aria-label="follow" onClick={this.follow} sx={{ marginLeft: 2, width: 40, height: 40, backgroundColor: '#ffffff44', ":hover": { backgroundColor: '#ffffff88' } }}>
@@ -473,7 +605,7 @@ class Main extends Component {
                             edge="start"
                             sx={{ marginLeft: 2, marginRight: 5, fontWeight: 'bold' }}
                         >
-                            {this.state.username}
+                            {this.props.username}
                         </Typography>
                         <Box>
                             <Button onClick={this.openUpdateStatusModal} size='small' sx={{ paddingLeft: 2, paddingRight: 2, fontSize: 10, fontWeight: 'bold', color: '#ffffff', backgroundColor: '#ffffff18', ":hover": { backgroundColor: '#00000033' } }}>Update Status</Button>
@@ -575,12 +707,12 @@ class Main extends Component {
                             />
                         </Card>
                         <Box sx={{ position: 'absolute', top: 'calc( 50% - 60px - 25px )', left: 'calc( 50% + 250px - 25px )' }}>
-                            <IconButton onClick={() => { this.updateStatus(); }} sx={{ position: 'absolute', top: 0, left: 0, width: 50, height: 50, backgroundColor: '#ffffff22' }}>
+                            <IconButton onClick={this.updateStatus} sx={{ position: 'absolute', top: 0, left: 0, width: 50, height: 50, backgroundColor: '#ffffff22' }}>
                                 <Check sx={{ fontSize: 24, color: '#ffffff' }} />
                             </IconButton>
                         </Box>
                         <Box sx={{ position: 'absolute', top: 'calc( 50% + 60px - 25px )', left: 'calc( 50% + 250px - 25px )' }}>
-                            <IconButton onClick={() => { this.clearUpdateStatusInput(); }} sx={{ position: 'absolute', top: 0, left: 0, width: 50, height: 50, backgroundColor: '#ffffff22' }}>
+                            <IconButton onClick={this.clearUpdateStatusInput} sx={{ position: 'absolute', top: 0, left: 0, width: 50, height: 50, backgroundColor: '#ffffff22' }}>
                                 <Delete sx={{ fontSize: 24, color: '#ffffff' }} />
                             </IconButton>
                         </Box>
@@ -617,12 +749,12 @@ class Main extends Component {
                             />
                         </Card>
                         <Box sx={{ position: 'absolute', top: 'calc( 50% - 60px - 25px )', left: 'calc( 50% + 250px - 25px )' }}>
-                            <IconButton onClick={() => { this.postArticle(); }} sx={{ position: 'absolute', top: 0, left: 0, width: 50, height: 50, backgroundColor: '#ffffff22' }}>
+                            <IconButton onClick={this.postArticle} sx={{ position: 'absolute', top: 0, left: 0, width: 50, height: 50, backgroundColor: '#ffffff22' }}>
                                 <Check sx={{ fontSize: 24, color: '#ffffff' }} />
                             </IconButton>
                         </Box>
                         <Box sx={{ position: 'absolute', top: 'calc( 50% + 60px - 25px )', left: 'calc( 50% + 250px - 25px )' }}>
-                            <IconButton onClick={() => { this.clearWritingArticleInput(); }} sx={{ position: 'absolute', top: 0, left: 0, width: 50, height: 50, backgroundColor: '#ffffff22' }}>
+                            <IconButton onClick={this.clearWritingArticleInput} sx={{ position: 'absolute', top: 0, left: 0, width: 50, height: 50, backgroundColor: '#ffffff22' }}>
                                 <Delete sx={{ fontSize: 24, color: '#ffffff' }} />
                             </IconButton>
                         </Box>
@@ -641,4 +773,16 @@ class Main extends Component {
     };
 }
 
-export default withRouter(Main);
+const mapStateToProps = (state) => {
+    return {
+        username: state.username
+    }
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        setUsername: (username) => dispatch(setUsername(username))
+    }
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(withRouter(Main));

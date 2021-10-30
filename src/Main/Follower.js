@@ -44,7 +44,7 @@ class Follower extends Component {
                                 variant="h6"
                                 fontWeight='bold'
                                 component="div">
-                                {this.state.name}
+                                {this.state.username}
                             </Typography>
                             <Box maxWidth={240}>
                                 <Typography

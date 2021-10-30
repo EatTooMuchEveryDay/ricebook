@@ -1,7 +1,7 @@
 import { Avatar, Button, Card, Grid, IconButton, Stack, TextField, Typography } from '@material-ui/core';
 import { ArrowBackIosNewRounded, CameraAltRounded } from '@material-ui/icons';
 import { Box } from '@material-ui/system';
-import { React, Component } from 'react';
+import React, { Component } from 'react';
 import { withRouter } from 'react-router';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -49,6 +49,7 @@ class Profile extends Component {
             password_validity: true,
             password_confirmation_validity: true
         };
+        this.cancel = null;
 
         this.checkAuth = this.checkAuth.bind(this);
         this.jumpMain = this.jumpMain.bind(this);
@@ -61,8 +62,15 @@ class Profile extends Component {
         this.checkAuth();
 
         // TO BE REMOVED
+        let self = this;
+        
         this.setState({ account_name_data: localStorage.getItem('username') });
-        axios.get('https://jsonplaceholder.typicode.com/users')
+        axios.get('https://jsonplaceholder.typicode.com/users',
+            {
+                cancelToken: new axios.CancelToken(function executor(c) {
+                    self.cancel = c;
+                })
+            })
             .then(function (response) {
                 for (let idx in response.data) {
                     if (this.state.account_name_data === response.data[idx].username) {
@@ -88,6 +96,10 @@ class Profile extends Component {
                 });
             });
     }
+    componentWillUnmount() {
+        // Just for test
+        this.cancel();
+    }
     checkAuth() {
         let loggedIn = localStorage.getItem("loggedIn");
 
@@ -98,7 +110,6 @@ class Profile extends Component {
     jumpMain() {
         this.props.history.push('/main');
     }
-
     renderDisplayItem(name) {
         let tStr = this.state[name.toLowerCase().replace(/ /g, '_') + '_data'];
 
@@ -160,10 +171,10 @@ class Profile extends Component {
                     let array = this.state.date_of_birth.split("/");
                     if (currentDate.getFullYear() - array[2] < 18) {
                         flag = false;
-                    } else if (currentDate.getFullYear() - array[2] === 18) {
+                    } else if (currentDate.getFullYear() - array[2] == 18) {
                         if (currentDate.getMonth() + 1 < array[0]) {
                             flag = false;
-                        } else if (currentDate.getMonth() + 1 === array[0]) {
+                        } else if (currentDate.getMonth() + 1 == array[0]) {
                             if (currentDate.getDate() < array[1]) {
                                 flag = false;
                             }

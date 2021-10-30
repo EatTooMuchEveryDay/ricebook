@@ -8,7 +8,7 @@ let patterns = {
   account_name: /^[A-Za-z]+[A-Za-z0-9]*$/,
   display_name: /^[A-Za-z0-9 ]*$/,
   email_address: /^[A-Za-z0-9]+@[A-Za-z0-9\.]+$/,
-  phone_number: /^([0-9]{10})|([0-9]{3}[- ]?[0-9]{3}[- ]?[0-9]{4})$/,
+  phone_number: /^[0-9]{3}[- ]?[0-9]{3}[- ]?[0-9]{4}$/,
   date_of_birth: /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/,
   zip_code: /^[0-9]{4,5}$/,
   password: /^[\S]{8,}$/,
@@ -84,10 +84,10 @@ class Register extends Component {
     let array = this.state.date_of_birth.split("/");
     if (currentDate.getFullYear() - array[2] < 18) {
       flag = false;
-    } else if (currentDate.getFullYear() - array[2] === 18) {
+    } else if (currentDate.getFullYear() - array[2] == 18) {
       if (currentDate.getMonth() + 1 < array[0]) {
         flag = false;
-      } else if (currentDate.getMonth() + 1 === array[0]) {
+      } else if (currentDate.getMonth() + 1 == array[0]) {
         if (currentDate.getDate() < array[1]) {
           flag = false;
         }
