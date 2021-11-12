@@ -16,3 +16,8 @@
 #write-article-img-upload {
     display: none;
 }
+
+div::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}

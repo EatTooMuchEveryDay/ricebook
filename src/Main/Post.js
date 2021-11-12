@@ -10,7 +10,7 @@ class Post extends Component {
             username: "",
             title: "",
             content: "",
-            // timestamp: ""
+            timestamp: "",
             commentOpened: false,
             comments: [
                 { id: 1, username: "User A", content: "This is a good article!" },
@@ -23,10 +23,16 @@ class Post extends Component {
         this.state.username = this.props.username;
         this.state.title = this.props.title;
         this.state.content = this.props.content;
+        this.state.timestamp = this.props.timestamp;
 
         this.commentModeSwitch = this.commentModeSwitch.bind(this);
+        this.timestamp2String = this.timestamp2String.bind(this);
     }
     commentModeSwitch(e) { e.preventDefault(); this.setState({ commentOpened: !this.state.commentOpened }); }
+    timestamp2String() {
+        let date = new Date(this.state.timestamp);
+        return date.toLocaleString();
+    }
 
     render() {
         return (
@@ -58,10 +64,15 @@ class Post extends Component {
                                     image={PostImg}
                                 />
                                 <CardContent>
-                                    <Typography noWrap gutterBottom variant="h5" component="div">
-                                        {this.state.title}
-                                    </Typography>
-                                    <Typography noWrap={false} textOverflow='ellipsis' overflow='scroll' component="div" variant="body2" color="text.secondary" sx={{ wordWrap: 'break-word', height: 80 }}>
+                                    <Grid>
+                                        <Typography noWrap gutterBottom variant="body2" color="GrayText" sx={{ float: 'right' }} paddingLeft={2} fontSize={12} component="div">
+                                            {this.timestamp2String()}
+                                        </Typography>
+                                        <Typography noWrap gutterBottom variant="h5" component="div">
+                                            {this.state.title}
+                                        </Typography>
+                                    </Grid>
+                                    <Typography noWrap={false} textOverflow='ellipsis' overflow='scroll' component="div" variant="body1" color="text.secondary" paddingBottom={0} sx={{ wordWrap: 'break-word', height: 80 }}>
                                         {this.state.content}
                                     </Typography>
                                 </CardContent>

@@ -520,7 +520,7 @@ class Main extends Component {
             "id": Math.round(Math.random() * 999999999),
             "title": this.state.writeArticleTitleInput,
             "body": this.state.writeArticleInput,
-            "timestamp": (new Date()).getTime
+            "timestamp": (new Date()).getTime()
         }
         let posts = this.state.posts;
         posts.splice(0, 0, newPost);
@@ -674,7 +674,7 @@ class Main extends Component {
                 <Grid container justifyContent='space-evenly' columnSpacing={0} rowSpacing={5} >
                     {this.filterPosts().map((post) => {
                         return (
-                            <Post username={null} title={post.title} content={post.body} key={post.id} />
+                            <Post username={null} title={post.title} content={post.body} key={post.id} timestamp={post.timestamp} />
                         );
                     })}
                     {/* <Post username="username1" title="title1" content="content1" />

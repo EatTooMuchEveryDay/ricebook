@@ -63,7 +63,7 @@ class Login extends Component {
         }
 
         if (!found) {
-          toast.error('Sorry, account not found', {
+          toast.error('Sorry, invalid account and password', {
             position: "top-right",
             autoClose: 5000,
             hideProgressBar: false,
