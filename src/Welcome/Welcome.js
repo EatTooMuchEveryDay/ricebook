@@ -8,8 +8,10 @@ import './Welcome.css';
 import { ToastContainer, toast } from 'react-toastify';
 import Grid from '@material-ui/core/Grid';
 import { connect } from 'react-redux';
-import { setUsername } from "../actions"
+import { setUsername } from "../actions";
+import config from '../config';
 
+axios.defaults.withCredentials = true;
 
 class Welcome extends Component {
     constructor(props) {
@@ -51,11 +53,10 @@ class Welcome extends Component {
         // jump
         this.props.history.push("/main");
     }
-    register(username) {
-        axios.get('https://jsonplaceholder.typicode.com/users')
+    register(user) {
+        axios.post(config.server_url + "/register", user)
             .then(function (response) {
-                // TODO change the condition
-                if (response.data.some((x) => { return x.username === username; })) {
+                if (response.data.result != 'success') {
                     toast.error('Username duplicated!', {
                         position: "top-right",
                         autoClose: 3000,
@@ -67,7 +68,7 @@ class Welcome extends Component {
                     });
                 } else {
                     // toast move to main
-                    toast.success('Welcome to join us, ' + username + '!', {
+                    toast.success('Welcome to join us, ' + response.data.username + '!', {
                         position: "top-right",
                         autoClose: 5000,
                         hideProgressBar: false,
@@ -77,13 +78,44 @@ class Welcome extends Component {
                         progress: undefined,
                     });
 
-                    localStorage.setItem("loggedIn", true);
-                    localStorage.setItem("username", username);
+                    axios.post(config.server_url + '/login', {
+                        username: user.username,
+                        password: user.password
+                    })
+                        .then(function (response) {
+                            if (response.data.result == 'success') {
+                                localStorage.setItem("loggedIn", true);
+                                localStorage.setItem("username", response.data.username);
 
-                    this.props.setUsername(username);
+                                this.props.setUsername(response.data.username);
 
-                    // jump
-                    this.props.history.push("/main");
+                                // jump
+                                this.props.history.push("/main");
+                            }
+
+                            if (response.data.result != 'success') {
+                                toast.error('Sorry, invalid account and password', {
+                                    position: "top-right",
+                                    autoClose: 5000,
+                                    hideProgressBar: false,
+                                    closeOnClick: false,
+                                    pauseOnHover: true,
+                                    draggable: true,
+                                    progress: undefined,
+                                });
+                            }
+                        }.bind(this))
+                        .catch(function (error) {
+                            toast.error('Unable to connect server', {
+                                position: "top-right",
+                                autoClose: 5000,
+                                hideProgressBar: false,
+                                closeOnClick: false,
+                                pauseOnHover: true,
+                                draggable: true,
+                                progress: undefined,
+                            });
+                        });
                 }
             }.bind(this))
             .catch(function (error) {

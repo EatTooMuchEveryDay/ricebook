@@ -9,8 +9,9 @@ import Post from './Post';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import cookie from 'react-cookies';
 import { connect } from 'react-redux';
-import { setUsername } from "../actions"
+import { setUsername } from "../actions";
 
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
@@ -393,6 +394,7 @@ class Main extends Component {
     logout() {
         localStorage.setItem("loggedIn", false);
         this.props.setUsername('');
+        // cookie.remove('sid'); // not allowed to modify the httponly cookie. If we want to destroy the cookie after logout, use two cookies combined as credential and destroy the not httponly one
         this.props.history.push("/welcome");
     }
     toggleDrawer = (open) => (event) => {

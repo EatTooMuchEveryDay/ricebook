@@ -3,6 +3,7 @@ import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Box, Stack, Typography, TextField, Button } from '@material-ui/core';
+import config from '../config';
 
 let patterns = {
   account_name: /^[A-Za-z]+[A-Za-z0-9]*$/,
@@ -106,7 +107,13 @@ class Register extends Component {
       return;
     }
 
-    this.props.register(this.state.account_name);
+    this.props.register({
+      username: this.state.account_name,
+      password: this.state.password,
+      zipcode: this.state.zip_code,
+      email: this.state.email_address,
+      dob: this.state.date_of_birth
+    });
   }
 
   render() {

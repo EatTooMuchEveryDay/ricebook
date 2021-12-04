@@ -3,6 +3,7 @@ import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Box, Stack, Typography, TextField, Button } from '@material-ui/core';
+import config from '../config';
 
 let patterns = {
   account_name: /^[A-Za-z0-9]+$/,
@@ -49,20 +50,16 @@ class Login extends Component {
       }
     }
 
-    axios.get('https://jsonplaceholder.typicode.com/users')
+    axios.post(config.server_url + '/login', {
+      username: this.state.account_name,
+      password: this.state.password
+    }, { withCredentials: true })
       .then(function (response) {
-        let found = false;
-
-        for (let idx in response.data) {
-          let user = response.data[idx];
-          if (user.username === this.state.account_name && user.address.street === this.state.password) {
-            this.props.login(this.state.account_name);
-            found = true;
-            break;
-          }
+        if (response.data.result == 'success') {
+          this.props.login(response.data.username);
         }
 
-        if (!found) {
+        if (response.data.result != 'success') {
           toast.error('Sorry, invalid account and password', {
             position: "top-right",
             autoClose: 5000,
