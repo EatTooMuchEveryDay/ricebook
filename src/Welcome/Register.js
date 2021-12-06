@@ -7,7 +7,7 @@ import config from '../config';
 
 let patterns = {
   account_name: /^[A-Za-z]+[A-Za-z0-9]*$/,
-  display_name: /^[A-Za-z0-9 ]*$/,
+  // display_name: /^[A-Za-z0-9 ]*$/,
   email_address: /^[A-Za-z0-9]+@[A-Za-z0-9\.]+$/,
   phone_number: /^[0-9]{3}[- ]?[0-9]{3}[- ]?[0-9]{4}$/,
   date_of_birth: /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/,
@@ -21,7 +21,7 @@ class Register extends Component {
     super(props);
     this.state = {
       account_name: "",
-      display_name: "",
+      // display_name: "",
       email_address: "",
       phone_number: "",
       date_of_birth: "",
@@ -29,7 +29,7 @@ class Register extends Component {
       password: "",
       password_confirmation: "",
       account_name_validity: true,
-      display_name_validity: true,
+      // display_name_validity: true,
       email_address_validity: true,
       phone_number_validity: true,
       date_of_birth_validity: true,
@@ -112,7 +112,8 @@ class Register extends Component {
       password: this.state.password,
       zipcode: this.state.zip_code,
       email: this.state.email_address,
-      dob: this.state.date_of_birth
+      dob: this.state.date_of_birth,
+      phone: this.state.phone_number
     });
   }
 
@@ -135,7 +136,7 @@ class Register extends Component {
               helperText={!this.state.account_name === '' ? 'Required' : ''}
             />
           </div>
-          <div className="welcome-form-row">
+          {/* <div className="welcome-form-row">
             <TextField
               className="welcome-form-input"
               error={!this.state.display_name_validity}
@@ -147,7 +148,7 @@ class Register extends Component {
               onChange={this.handleInputChange}
               helperText={!this.state.display_name === '' ? 'Required' : ''}
             />
-          </div>
+          </div> */}
           <div className="welcome-form-row">
             <TextField
               className="welcome-form-input"

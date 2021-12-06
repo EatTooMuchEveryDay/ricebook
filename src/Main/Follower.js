@@ -6,16 +6,14 @@ class Follower extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            userID: "",
             username: "",
-            name: "",
             status: "",
+            avatar: ""
         };
 
-        this.state.userID = this.props.userID;
         this.state.username = this.props.username;
-        this.state.name = this.props.name;
         this.state.status = this.props.status;
+        this.state.avatar = this.props.avatar;
 
         this.unfollow = this.unfollow.bind(this);
     }
@@ -38,7 +36,7 @@ class Follower extends Component {
                         marginLeft={2}
                         sx={{ height: '100%' }}
                         spacing={2}>
-                        <Avatar alt="followerAvatar" src={FollowerAvatar} sx={{ width: 60, height: 60 }} />
+                        <Avatar alt="followerAvatar" src={this.state.avatar} sx={{ width: 60, height: 60 }} />
                         <Box>
                             <Typography
                                 variant="h6"

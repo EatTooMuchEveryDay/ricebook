@@ -22,6 +22,7 @@ class Login extends Component {
 
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.googleLogin = this.googleLogin.bind(this);
   }
   handleInputChange(e) {
     this.setState({
@@ -84,6 +85,10 @@ class Login extends Component {
       });
   }
 
+  googleLogin(e){
+
+  }
+
   render() {
     return (
       <Stack spacing={2} sx={{ textAlign: 'center' }}>
@@ -142,6 +147,12 @@ class Login extends Component {
             {/* </center> */}
           </div>
         </Box>
+
+        {/* <div>
+          <Button variant="contained" href={config.server_url+'/auth/google'}>Google Login
+            <i className="material-icons right">send</i>
+          </Button>
+        </div> */}
         {/* </div> */}
       </Stack>
     );

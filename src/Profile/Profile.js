@@ -1,5 +1,5 @@
 import { Avatar, Button, Card, Grid, IconButton, Stack, TextField, Typography } from '@material-ui/core';
-import { ArrowBackIosNewRounded, CameraAltRounded } from '@material-ui/icons';
+import { ArrowBackIosNewRounded, CameraAltRounded, RestaurantRounded } from '@material-ui/icons';
 import { Box } from '@material-ui/system';
 import React, { Component } from 'react';
 import { withRouter } from 'react-router';
@@ -8,15 +8,18 @@ import 'react-toastify/dist/ReactToastify.css';
 import './Profile.css';
 import avatar from '../avatar.JPG';
 import axios from 'axios';
+import config from '../config';
+
+axios.defaults.withCredentials = true;
 
 
 let patterns = {
-    account_name: /^[A-Za-z]+[A-Za-z0-9]*$/,
-    display_name: /^[A-Za-z0-9 ]*$/,
-    email_address: /^[A-Za-z0-9]+@[A-Za-z0-9\.]+$/,
-    phone_number: /^([0-9]{10})|([0-9]{3}[- ]?[0-9]{3}[- ]?[0-9]{4})$/,
-    date_of_birth: /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/,
-    zip_code: /^[0-9]{4,5}$/,
+    // username: /^[A-Za-z]+[A-Za-z0-9]*$/,
+    // display_name: /^[A-Za-z0-9 ]*$/,
+    email: /^[A-Za-z0-9]+@[A-Za-z0-9\.]+$/,
+    phone: /^([0-9]{10})|([0-9]{3}[- ]?[0-9]{3}[- ]?[0-9]{4})$/,
+    dob: /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/,
+    zipcode: /^[0-9]{4,5}$/,
     password: /^[\S]{8,}$/,
     password_confirmation: /^[\S]{8,}$/
 }
@@ -25,64 +28,159 @@ class Profile extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            account_name_data: "NewUserName",
-            display_name_data: "NewUserDisplayName",
-            email_address_data: "newuser@rice.edu",
-            phone_number_data: "123-123-1234",
-            date_of_birth_data: "01/01/2000",
-            zip_code_data: "77005",
-            password_data: "123456789",
-            account_name: "",
-            display_name: "",
-            email_address: "",
-            phone_number: "",
-            date_of_birth: "",
-            zip_code: "",
+            avatar: '',
+            username_data: "",
+            email_data: "",
+            phone_data: "",
+            dob_data: "",
+            zipcode_data: "",
+            password_data: "",
+            // username: "",
+            // display_name: "",
+            email: "",
+            phone: "",
+            dob: "",
+            zipcode: "",
             password: "",
             password_confirmation: "",
-            account_name_validity: true,
-            display_name_validity: true,
-            email_address_validity: true,
-            phone_number_validity: true,
-            date_of_birth_validity: true,
-            zip_code_validity: true,
+            // username_validity: true,
+            email_validity: true,
+            phone_validity: true,
+            dob_validity: true,
+            zipcode_validity: true,
             password_validity: true,
             password_confirmation_validity: true
         };
-        this.cancel = null;
-
         this.checkAuth = this.checkAuth.bind(this);
+        this.initProfile = this.initProfile.bind(this);
         this.jumpMain = this.jumpMain.bind(this);
         this.renderDisplayItem = this.renderDisplayItem.bind(this);
         // this.renderUpdateItem = this.renderUpdateItem.bind(this);
         this.handleUpdateInputChange = this.handleUpdateInputChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
+        this.handleImageChange = this.handleImageChange.bind(this);
     }
     componentDidMount() {
-        this.checkAuth();
+        if (!this.checkAuth()) {
+            return;
+        }
 
-        // TO BE REMOVED
-        let self = this;
-        
-        this.setState({ account_name_data: localStorage.getItem('username') });
-        axios.get('https://jsonplaceholder.typicode.com/users',
-            {
-                cancelToken: new axios.CancelToken(function executor(c) {
-                    self.cancel = c;
-                })
-            })
+        this.initProfile();
+    }
+    checkAuth() {
+        let loggedIn = localStorage.getItem("loggedIn");
+
+        if (loggedIn == 'false') {
+            this.props.history.push("/welcome");
+            return false;
+        }
+
+        return true;
+    }
+    jumpMain() {
+        this.props.history.push('/main');
+    }
+    initProfile() {
+        // this.setState({ username_data: localStorage.getItem('username') });
+
+        axios.get(config.server_url + '/avatar')
             .then(function (response) {
-                for (let idx in response.data) {
-                    if (this.state.account_name_data === response.data[idx].username) {
-                        let user = response.data[idx];
-                        this.setState({
-                            display_name_data: user.name,
-                            email_address_data: user.email,
-                            phone_number_data: user.phone,
-                            zip_code_data: user.address.zipcode
-                        });
-                    }
+                this.setState({ avatar: response.data.avatar });
+            }.bind(this))
+            .catch(function (error) {
+                toast.error('Unable to connect server', {
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: true,
+                    closeOnClick: false,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
+            });
+
+        axios.get(config.server_url + '/whoami')
+            .then(function (response) {
+                this.setState({ username_data: response.data });
+            }.bind(this))
+            .catch(function (error) {
+                toast.error('Unable to connect server', {
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: true,
+                    closeOnClick: false,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
+            });
+        axios.get(config.server_url + '/email')
+            .then(function (response) {
+                this.setState({ email_data: response.data.email });
+            }.bind(this))
+            .catch(function (error) {
+                toast.error('Unable to connect server', {
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: true,
+                    closeOnClick: false,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
+            });
+        axios.get(config.server_url + '/zipcode')
+            .then(function (response) {
+                this.setState({ zipcode_data: response.data.zipcode });
+            }.bind(this))
+            .catch(function (error) {
+                toast.error('Unable to connect server', {
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: true,
+                    closeOnClick: false,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
+            });
+        axios.get(config.server_url + '/dob')
+            .then(function (response) {
+                this.setState({ dob_data: response.data.dob });
+            }.bind(this))
+            .catch(function (error) {
+                toast.error('Unable to connect server', {
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: true,
+                    closeOnClick: false,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
+            });
+        axios.get(config.server_url + '/phone')
+            .then(function (response) {
+                this.setState({ phone_data: response.data.phone });
+            }.bind(this))
+            .catch(function (error) {
+                toast.error('Unable to connect server', {
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: true,
+                    closeOnClick: false,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
+            });
+        axios.get(config.server_url + '/passwordlength')
+            .then(function (response) {
+                let pwd = '';
+                for (let idx = 0; idx < response.data.passwordlength; idx++) {
+                    pwd += '*';
                 }
+                this.setState({ password_data: pwd });
             }.bind(this))
             .catch(function (error) {
                 toast.error('Unable to connect server', {
@@ -96,43 +194,49 @@ class Profile extends Component {
                 });
             });
     }
-    componentWillUnmount() {
-        // Just for test
-        this.cancel();
-    }
-    checkAuth() {
-        let loggedIn = localStorage.getItem("loggedIn");
+    renderDisplayItem(_name) {
+        // let tStr = this.state[name.toLowerCase().replace(/ /g, '_') + '_data'];
 
-        if (loggedIn == 'false') {
-            this.props.history.push("/welcome");
-        }
-    }
-    jumpMain() {
-        this.props.history.push('/main');
-    }
-    renderDisplayItem(name) {
-        let tStr = this.state[name.toLowerCase().replace(/ /g, '_') + '_data'];
-
-        if (name === 'Password') {
-            tStr = tStr.replace(/./g, '*');
+        // if (name === 'Password') {
+        //     tStr = tStr.replace(/./g, '*');
+        // }
+        let name = '';
+        switch (_name) {
+            case 'Account Name':
+                name = 'username';
+                break;
+            case 'Email Address':
+                name = 'email';
+                break;
+            case 'Phone Number':
+                name = 'phone';
+                break;
+            case 'Date of Birth':
+                name = 'dob';
+                break;
+            case 'Zip Code':
+                name = 'zipcode';
+                break;
+            case 'Password':
+                name = 'password';
+                break;
+            default:
+                break;
         }
 
         return (
             <Box key={name} sx={{ marginLeft: 4 }}>
-                <Typography variant='h6'>{name}</Typography>
-                <Typography variant='body1' sx={{ marginLeft: 3 }} name={this.state[name.toLowerCase().replace(/ /g, '_')] + '_data'}>{tStr}</Typography>
+                <Typography variant='h6'>{_name}</Typography>
+                <Typography variant='body1' sx={{ marginLeft: 3 }}>{this.state[name + '_data']}</Typography>
             </Box>
         );
     }
-    // renderUpdateItem(name) {
-
-    // }
     handleUpdateInputChange(e) {
         this.setState({ [e.target.name]: e.target.value });
 
         this.setState({ [e.target.name + '_validity']: e.target.value === "" || patterns[e.target.name].test(e.target.value) });
     }
-    handleSubmit(e) {
+    async handleSubmit(e) {
         e.preventDefault();
 
         let updateInfo = [];
@@ -141,7 +245,7 @@ class Profile extends Component {
             let value = this.state[name];
 
             if (value != "" || name == "password" && this.state.password_confirmation != "") {
-                if (value === this.state[name + '_data']) {
+                if (name != 'password' && value === this.state[name + '_data']) {
                     toast.error('Please input a new value for ' + name.replace(/_/g, ' '), {
                         position: "top-right",
                         autoClose: 3000,
@@ -168,7 +272,7 @@ class Profile extends Component {
                     }
 
                     let currentDate = new Date(), flag = true;
-                    let array = this.state.date_of_birth.split("/");
+                    let array = this.state.dob.split("/");
                     if (currentDate.getFullYear() - array[2] < 18) {
                         flag = false;
                     } else if (currentDate.getFullYear() - array[2] == 18) {
@@ -206,7 +310,9 @@ class Profile extends Component {
                         return;
                     }
 
-                    updateInfo[name] = { name: name, new: this.state[name], old: this.state[name + '_data'] };
+                    if (name != 'password_confirmation') {
+                        updateInfo[name] = { name: name, new: this.state[name], old: this.state[name + '_data'] };
+                    }
                 } else if (name === "password" && this.state.password != this.state.password_confirmation) {
                     toast.error('Please check you password confirmation', {
                         position: "top-right",
@@ -224,29 +330,69 @@ class Profile extends Component {
 
         let tStr = 'Updated: ';
         for (let name in updateInfo) {
-            this.setState({ [name + '_data']: this.state[name], [name]: "" });
-            if (name === "password") {
-                this.setState({ password_confirmation: "" });
-            }
+            tStr += await axios.put(config.server_url + '/' + name, { [name]: updateInfo[name].new })
+                .then(function (response) {
+                    if (name == 'password') {
+                        let pwd = '';
+                        for (let idx = 0; idx < updateInfo[name].new.length; idx++) {
+                            pwd += '*';
+                        }
+                        this.setState({ password_data: pwd, password_confirmation: "" });
+                    } else {
+                        this.setState({ [name + '_data']: response.data[name] });
+                    }
+                    this.setState({ [name]: "" });
 
-            if (name === "account_name") {
-                localStorage.setItem('username', updateInfo[name].new);
-            }
+                    return name.replace(/_/g, ' ') + ', ';
+                }.bind(this))
+                .catch(function (error) {
+                    toast.error('Unable to connect server', {
+                        position: "top-right",
+                        autoClose: 3000,
+                        hideProgressBar: true,
+                        closeOnClick: false,
+                        pauseOnHover: true,
+                        draggable: true,
+                        progress: undefined,
+                    });
 
-            tStr += name.replace(/_/g, ' ') + ', ';
+                    return '';
+                });
         }
 
         tStr = tStr.substr(0, tStr.length - 2) + '.';
 
         toast.success(tStr, {
             position: "top-right",
-            autoClose: 5000,
+            autoClose: 3000,
             hideProgressBar: true,
             closeOnClick: false,
             pauseOnHover: true,
             draggable: true,
             progress: undefined,
         });
+    }
+
+    handleImageChange(e) {
+        var reader = new FileReader();
+        var file = e.target.files[0];
+
+        reader.onloadend = () => {
+            const formData = new FormData();
+            formData.append('image', file);
+            let axioConfig = {
+                method: 'put',
+                headers: { 'Content-Type': 'multipart/form-data' }
+            }
+
+            axios.put(config.server_url + '/avatar', formData, axioConfig).then((response) => {
+                this.setState({ avatar: response.data.avatar });
+            }).catch((err) => {
+                toast.error('Unable to connect server', { position: "top-right", autoClose: 5000, hideProgressBar: false, closeOnClick: true, pauseOnHover: true, draggable: true, progress: undefined, });
+            });
+        }
+
+        reader.readAsDataURL(file);
     }
 
     render() {
@@ -258,9 +404,9 @@ class Profile extends Component {
 
                 {/* <Box sx={{ position: 'absolute', right: 400, top: 60 }}> */}
                 <Card raised={true} sx={{ position: 'absolute', top: 60, right: 120, width: 160, height: 160, borderRadius: 80 }}>
-                    <Avatar alt="avatar" src={avatar} sx={{ width: 160, height: 160 }} />
+                    <Avatar alt="avatar" src={this.state.avatar} sx={{ width: 160, height: 160 }} />
                     <label htmlFor="avatar-img-upload">
-                        <input accept="image/*" id="avatar-img-upload" type="file" />
+                        <input accept="image/*" id="avatar-img-upload" type="file" onChange={this.handleImageChange} />
                         <IconButton component='span' sx={{ position: 'absolute', top: 0, left: 0, width: 160, height: 160, color: 'transparent', ":hover": { color: '#ffffffcc', boxShadow: '0px 4px 4px 0px #00000055' }, transition: 'boxShadow 0.8s cubic-bezier(0.19, 1, 0.22, 1)' }}>
                             <CameraAltRounded sx={{ fontSize: 80, opacity: 1 }} />
                         </IconButton>
@@ -281,7 +427,7 @@ class Profile extends Component {
                                 sx={{ position: 'absolute', top: 0, bottom: 10, left: 0, right: 0 }}
                             >
                                 <Typography variant='h5'>Current Info</Typography>
-                                {['Account Name', 'Display Name', 'Email Address', 'Phone Number', 'Date of Birth', 'Zip Code', 'Password'].map((item) => { return this.renderDisplayItem(item); })}
+                                {['Account Name', 'Email Address', 'Phone Number', 'Date of Birth', 'Zip Code', 'Password'].map((item) => { return this.renderDisplayItem(item); })}
                             </Stack>
                         </Card>
                     </Grid>
@@ -298,7 +444,7 @@ class Profile extends Component {
                                 component="form" onSubmit={this.handleSubmit}
                             >
                                 <Typography variant='h5'>Update Info</Typography>
-                                <TextField
+                                {/* <TextField
                                     size='small' fullWidth={true}
                                     error={!this.state.account_name_validity}
                                     label="Account Name"
@@ -308,8 +454,8 @@ class Profile extends Component {
                                     value={this.state.account_name}
                                     onChange={this.handleUpdateInputChange}
                                     helperText={!this.state.account_name === '' ? 'Start with character' : ''}
-                                />
-                                <TextField
+                                /> */}
+                                {/* <TextField
                                     size='small' fullWidth={true}
                                     error={!this.state.display_name_validity}
                                     label="Display Name (Optional)"
@@ -318,50 +464,50 @@ class Profile extends Component {
                                     // placeholder="Your display name"
                                     value={this.state.display_name}
                                     onChange={this.handleUpdateInputChange}
-                                />
+                                /> */}
                                 <TextField
                                     size='small' fullWidth={true}
-                                    error={!this.state.email_address_validity}
+                                    error={!this.state.email_validity}
                                     label="E-mail Address"
-                                    name="email_address"
+                                    name="email"
                                     variant="outlined"
                                     placeholder="nickname@server"
-                                    value={this.state.email_address}
+                                    value={this.state.email}
                                     onChange={this.handleUpdateInputChange}
-                                    helperText={!this.state.account_name_validity ? 'nickname@server' : ''}
+                                    helperText={!this.state.email_validity ? 'nickname@server' : ''}
                                 />
                                 <TextField
                                     size='small' fullWidth={true}
-                                    error={!this.state.phone_number_validity}
+                                    error={!this.state.phone_validity}
                                     label="Phone Number"
-                                    name="phone_number"
+                                    name="phone"
                                     variant="outlined"
                                     placeholder="123-123-1234"
-                                    value={this.state.phone_number}
+                                    value={this.state.phone}
                                     onChange={this.handleUpdateInputChange}
-                                // helperText={!this.state.phone_number_validity ? 'Required' : ''}
+                                // helperText={!this.state.phone_validity ? 'Required' : ''}
                                 />
                                 <TextField
                                     size='small' fullWidth={true}
-                                    error={!this.state.date_of_birth_validity}
+                                    error={!this.state.dob_validity}
                                     label="Date of Birth"
-                                    name="date_of_birth"
+                                    name="dob"
                                     variant="outlined"
                                     placeholder="mm/dd/yyyy"
-                                    value={this.state.date_of_birth}
+                                    value={this.state.dob}
                                     onChange={this.handleUpdateInputChange}
-                                // helperText={!this.state.date_of_birth_validity ? 'Required' : ''}
+                                // helperText={!this.state.dob_validity ? 'Required' : ''}
                                 />
                                 <TextField
                                     size='small' fullWidth={true}
-                                    error={!this.state.zip_code_validity}
+                                    error={!this.state.zipcode_validity}
                                     label="Zip Code"
-                                    name="zip_code"
+                                    name="zipcode"
                                     variant="outlined"
                                     placeholder="#### or #####"
-                                    value={this.state.zip_code}
+                                    value={this.state.zipcode}
                                     onChange={this.handleUpdateInputChange}
-                                // helperText={!this.state.zip_code_validity ? 'Required' : ''}
+                                // helperText={!this.state.zipcode_validity ? 'Required' : ''}
                                 />
                                 <TextField
                                     size='small' fullWidth={true}

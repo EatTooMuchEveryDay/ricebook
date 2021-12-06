@@ -1,7 +1,5 @@
 # Ricebook Frontend
 
-> Rui Xiao xrui0310@gmail.com
-
 
 
 ## Background
